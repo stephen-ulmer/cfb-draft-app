@@ -2,61 +2,117 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-    provider = "prisma-client-js"
+  provider = "prisma-client-js"
 }
 
 datasource db {
-    provider = "mysql"
-    url      = env("MYSQL_URL")
+  provider = "mysql"
+  url      = env("MYSQL_URL")
 }
 
 model Example {
-    id        String   @id @default(cuid())
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // Necessary for Next auth
 model Account {
-    id                String  @id @default(cuid())
-    userId            String
-    type              String
-    provider          String
-    providerAccountId String
-    refresh_token     String?  @db.Text
-    access_token      String?  @db.Text
-    expires_at        Int?
-    token_type        String?
-    scope             String?
-    id_token          String?  @db.Text
-    session_state     String?
-    user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-    @@unique([provider, providerAccountId])
+  @@unique([provider, providerAccountId])
 }
 
 model Session {
-    id           String   @id @default(cuid())
-    sessionToken String   @unique
-    userId       String
-    expires      DateTime
-    user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model User {
-    id            String    @id @default(cuid())
-    name          String?
-    email         String?   @unique
-    emailVerified DateTime?
-    image         String?
-    accounts      Account[]
-    sessions      Session[]
+  id             String           @id @default(cuid())
+  name           String?
+  email          String?          @unique
+  emailVerified  DateTime?
+  image          String?
+  accounts       Account[]
+  sessions       Session[]
+  leagues        League[]
+  usersInLeagues  UsersInLeagues[]
+  rosters         Roster[]
+  picks           Pick[]
 }
 
 model VerificationToken {
-    identifier String
-    token      String   @unique
-    expires    DateTime
+  identifier String
+  token      String   @unique
+  expires    DateTime
 
-    @@unique([identifier, token])
+  @@unique([identifier, token])
+}
+
+model League {
+  id          String           @id @default(cuid())
+  name        String
+  description String?
+  owner       User             @relation(fields: [ownerId], references: [id])
+  ownerId     String
+  members     UsersInLeagues[]
+  rosters     Roster[]
+  picks       Pick[]
+
+  @@unique([ownerId, name])
+}
+
+model UsersInLeagues {
+  league   League   @relation(fields: [leagueId], references: [id])
+  leagueId String
+  user     User     @relation(fields: [userId], references: [id])
+  userId   String
+  joinedAt DateTime @default(now())
+
+  @@id([leagueId, userId])
+}
+
+model Roster {
+  id       String  @id @default(cuid())
+  owner    User    @relation(fields: [ownerId], references: [id])
+  ownerId  String
+  picks    Pick[]
+  league   League? @relation(fields: [leagueId], references: [id])
+  leagueId String?
+}
+
+model Pick {
+  id       String @id @default(cuid())
+  owner    User   @relation(fields: [ownerId], references: [id])
+  ownerId  String
+  league   League @relation(fields: [leagueId], references: [id])
+  leagueId String
+  roster   Roster @relation(fields: [rosterId], references: [id])
+  rosterId String
+  pick     Int
+  team     Team   @relation(fields: [teamId], references: [id])
+  teamId   Int
+}
+
+model Team {
+  id         Int    @id
+  name       String
+  conference String
+  picks       Pick[]
 }
