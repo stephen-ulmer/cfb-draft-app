@@ -1,4 +1,4 @@
-import { prisma } from "@/server/db";
+import { db as prisma } from "lib/db";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { type GetServerSidePropsContext } from "next";
 import {
